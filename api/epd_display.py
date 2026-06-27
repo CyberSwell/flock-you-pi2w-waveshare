@@ -50,6 +50,10 @@ _MONO_PATHS = [
     '/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf',
     '/usr/share/fonts/truetype/freefont/FreeMono.ttf',
 ]
+_MONO_BOLD_PATHS = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf',
+]
 
 
 def _load_font(paths, size):
@@ -147,11 +151,11 @@ class EPDDisplay:
         return False
 
     def _load_fonts(self):
-        self._f_title = _load_font(_BOLD_PATHS, 14)
-        self._f_body  = _load_font(_FONT_PATHS, 12)
+        self._f_title = _load_font(_MONO_BOLD_PATHS, 12)
+        self._f_body  = _load_font(_MONO_PATHS, 11)
         self._f_mono  = _load_font(_MONO_PATHS, 11)
-        self._f_small = _load_font(_FONT_PATHS, 10)
-        self._f_tiny  = _load_font(_FONT_PATHS, 9)
+        self._f_small = _load_font(_MONO_PATHS,  9)
+        self._f_tiny  = _load_font(_MONO_PATHS,  9)
 
     def _render(self, state):
         """Return a PIL Image representing the current state."""
@@ -167,7 +171,7 @@ class EPDDisplay:
         det_count = state.get('det_count', 0)
         noun = "device" if det_count == 1 else "devices"
         device_str = f"{det_count} {noun}"
-        now_str = datetime.now().strftime('%m/%d  %H:%M')
+        now_str = datetime.now().strftime('%m/%d %H:%M')
         try:
             dev_w = int(draw.textlength(device_str, font=self._f_body))
             now_w = int(draw.textlength(now_str,    font=self._f_body))
