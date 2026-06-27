@@ -9,7 +9,7 @@
 // CONFIG
 // ============================================================
 
-#define BUZZER_PIN 3
+#define BUZZER_PIN 4
 #define USE_BUZZER 1
 
 // Onboard user LED on Seeed XIAO ESP32-S3 is GPIO21 and is ACTIVE LOW
