@@ -1832,16 +1832,18 @@
 
         function updateFlockStatus(connected) {
             document.getElementById('flockStatus').classList.toggle('active', connected);
-            document.getElementById('flockPortControls').style.display = connected ? 'none' : '';
-            document.getElementById('connectFlockBtn').style.display    = connected ? 'none' : 'inline-block';
-            document.getElementById('disconnectFlockBtn').style.display = connected ? 'inline-block' : 'none';
+            document.getElementById('flockDeviceSelect').disabled        = connected;
+            document.getElementById('refreshFlockPortsBtn').style.display = connected ? 'none' : '';
+            document.getElementById('connectFlockBtn').style.display      = connected ? 'none' : 'inline-block';
+            document.getElementById('disconnectFlockBtn').style.display   = connected ? 'inline-block' : 'none';
         }
 
         function updateGpsStatus(connected) {
             document.getElementById('gpsStatus').classList.toggle('active', connected);
-            document.getElementById('gpsPortControls').style.display = connected ? 'none' : '';
-            document.getElementById('connectGpsBtn').style.display    = connected ? 'none' : 'inline-block';
-            document.getElementById('disconnectGpsBtn').style.display = connected ? 'inline-block' : 'none';
+            document.getElementById('gpsPortSelect').disabled           = connected;
+            document.getElementById('refreshGpsPortsBtn').style.display = connected ? 'none' : '';
+            document.getElementById('connectGpsBtn').style.display      = connected ? 'none' : 'inline-block';
+            document.getElementById('disconnectGpsBtn').style.display   = connected ? 'inline-block' : 'none';
         }
 
         function loadStatus() {
@@ -1849,6 +1851,22 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log('Status loaded:', data);
+                    if (data.flock_port) {
+                        const sel = document.getElementById('flockDeviceSelect');
+                        if (!sel.querySelector(`option[value="${data.flock_port}"]`)) {
+                            const opt = new Option(data.flock_port, data.flock_port);
+                            sel.add(opt);
+                        }
+                        sel.value = data.flock_port;
+                    }
+                    if (data.gps_port) {
+                        const sel = document.getElementById('gpsPortSelect');
+                        if (!sel.querySelector(`option[value="${data.gps_port}"]`)) {
+                            const opt = new Option(data.gps_port, data.gps_port);
+                            sel.add(opt);
+                        }
+                        sel.value = data.gps_port;
+                    }
                     updateFlockStatus(data.flock_connected);
                     updateGpsStatus(data.gps_connected);
                 })
