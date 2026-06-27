@@ -283,16 +283,21 @@ def gps_reader():
                 break
         time.sleep(0.1)
 
+FLOCK_DATA_TIMEOUT = 30  # seconds of silence before marking sniffer offline
+
 def flock_reader():
     """Background thread for reading Flock device data"""
     global flock_serial_connection, flock_device_connected, serial_data_buffer
-    
+
+    last_data = time.monotonic()
+
     with app.app_context():
         while flock_device_connected:
             if flock_serial_connection and flock_serial_connection.is_open:
                 try:
                     line = flock_serial_connection.readline().decode('utf-8', errors='ignore')
                     if line:
+                        last_data = time.monotonic()
                         line = line.strip()
                         if line:
                             # Store in buffer for terminal
@@ -328,6 +333,13 @@ def flock_reader():
                                 # Not JSON, just log it
                                 print(f"Flock device (non-JSON): {line}")
                                 
+                    elif time.monotonic() - last_data > FLOCK_DATA_TIMEOUT:
+                        print(f"Flock data timeout ({FLOCK_DATA_TIMEOUT}s) — marking offline")
+                        with connection_lock:
+                            flock_device_connected = False
+                        safe_socket_emit('flock_disconnected', {})
+                        attempt_reconnect_flock()
+                        break
                 except Exception as e:
                     print(f"Flock device read error: {e}")
                     with connection_lock:
