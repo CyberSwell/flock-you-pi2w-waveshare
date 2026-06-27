@@ -57,7 +57,7 @@ DATA_DIR.mkdir(exist_ok=True)
 def _get_epd_state():
     """Return display state dict; called by EPDDisplay thread every 5 s."""
     latest = detections[-1] if detections else None
-    latest_mac, latest_age, latest_rssi = '', '', ''
+    latest_mac, latest_age, latest_rssi, latest_channel = '', '', '', ''
     if latest:
         latest_mac     = latest.get('mac_address', '')
         latest_rssi    = str(latest.get('last_rssi') or latest.get('rssi', ''))
