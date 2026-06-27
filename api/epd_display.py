@@ -172,7 +172,7 @@ class EPDDisplay:
         draw.text((160, 4), now_str, font=self._f_body, fill=255)
 
         # ── Connectivity row ──────────────────────────────────────────
-        y = 25
+        y = 27
         flock_ok = state.get('flock_connected', False)
         gps_ok   = state.get('gps_connected',   False)
 
@@ -190,7 +190,7 @@ class EPDDisplay:
             draw.text((x_text, y), f"{label}: {status}", font=self._f_small, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 44, EPD_WIDTH - 1, 44], fill=0)
+        draw.line([0, 46, EPD_WIDTH - 1, 46], fill=0)
 
         # ── Latest detection ──────────────────────────────────────────
         latest_mac     = state.get('latest_mac',     '')
@@ -199,19 +199,19 @@ class EPDDisplay:
         latest_channel = state.get('latest_channel', '')
 
         if latest_mac:
-            draw.text((4, 49), "LAST:", font=self._f_body, fill=0)
-            draw.text((46, 49), latest_mac.upper(), font=self._f_mono, fill=0)
+            draw.text((4, 51), "LAST:", font=self._f_body, fill=0)
+            draw.text((46, 51), latest_mac.upper(), font=self._f_mono, fill=0)
 
-            draw.text((4, 65), latest_age, font=self._f_small, fill=0)
+            draw.text((4, 69), latest_age, font=self._f_small, fill=0)
             if latest_channel:
-                draw.text((100, 65), f"CH {latest_channel}", font=self._f_small, fill=0)
+                draw.text((100, 69), f"CH {latest_channel}", font=self._f_small, fill=0)
             if latest_rssi:
-                draw.text((168, 65), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                draw.text((168, 69), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
         else:
-            draw.text((4, 49), "No detections this session", font=self._f_body, fill=0)
+            draw.text((4, 51), "No detections this session", font=self._f_body, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 83, EPD_WIDTH - 1, 83], fill=0)
+        draw.line([0, 87, EPD_WIDTH - 1, 87], fill=0)
 
         # ── GPS coordinates ───────────────────────────────────────────
         gps_lat = state.get('gps_lat', '')
@@ -222,14 +222,14 @@ class EPDDisplay:
             coord_str = "Searching for fix..."
         else:
             coord_str = "GPS offline"
-        draw.text((4, 88), coord_str, font=self._f_mono, fill=0)
+        draw.text((4, 92), coord_str, font=self._f_mono, fill=0)
 
         # ── Stats row (sats + cumulative total) ───────────────────────
         gps_sats  = state.get('gps_sats', 0)
         cum_count = state.get('cumulative_count', 0)
         sats_str  = f"{gps_sats} sats" if (state.get('gps_connected') and gps_sats) else "No fix"
-        draw.text((4,   101), sats_str,                font=self._f_small, fill=0)
-        draw.text((130, 101), f"Total: {cum_count:,}", font=self._f_small, fill=0)
+        draw.text((4,   107), sats_str,                font=self._f_small, fill=0)
+        draw.text((130, 107), f"Total: {cum_count:,}", font=self._f_small, fill=0)
 
 
         return img
