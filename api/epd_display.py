@@ -168,8 +168,8 @@ class EPDDisplay:
         noun = "device" if det_count == 1 else "devices"
         draw.text((108, 4), f"{det_count} {noun}", font=self._f_body, fill=255)
 
-        now_str = datetime.now().strftime('%H:%M')
-        draw.text((212, 4), now_str, font=self._f_body, fill=255)
+        now_str = datetime.now().strftime('%m/%d  %H:%M')
+        draw.text((160, 4), now_str, font=self._f_body, fill=255)
 
         # ── Connectivity row ──────────────────────────────────────────
         y = 25
@@ -228,12 +228,6 @@ class EPDDisplay:
         draw.text((4,   96), sats_str,                    font=self._f_small, fill=0)
         draw.text((130, 96), f"Total: {cum_count:,}",     font=self._f_small, fill=0)
 
-        # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 108, EPD_WIDTH - 1, 108], fill=0)
-
-        # ── Footer (date only) ────────────────────────────────────────
-        draw.text((EPD_WIDTH // 2, 113), datetime.now().strftime('%m/%d'),
-                  font=self._f_tiny, fill=0, anchor='mt')
 
         return img
 
