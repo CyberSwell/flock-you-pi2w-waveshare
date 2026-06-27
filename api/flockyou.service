@@ -1,0 +1,17 @@
+[Unit]
+Description=Flock-You detection server
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/flock-you/api
+ExecStart=/usr/bin/python3 flockyou.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=flockyou
+
+[Install]
+WantedBy=multi-user.target

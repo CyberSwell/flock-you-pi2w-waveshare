@@ -13,6 +13,12 @@ import uuid
 import pickle
 from pathlib import Path
 
+try:
+    from epd_display import EPDDisplay
+    _EPD_AVAILABLE = True
+except ImportError:
+    _EPD_AVAILABLE = False
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'flockyou_dev_key_2024')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading', logger=True, engineio_logger=True)
@@ -47,6 +53,26 @@ SETTINGS_FILE = DATA_DIR / 'settings.json'
 
 # Ensure data directory exists
 DATA_DIR.mkdir(exist_ok=True)
+
+def _get_epd_state():
+    """Return display state dict; called by EPDDisplay thread every 5 s."""
+    latest = detections[-1] if detections else None
+    latest_mac, latest_time, latest_rssi = '', '', ''
+    if latest:
+        latest_mac  = latest.get('mac_address', '')
+        dt = latest.get('detection_time') or latest.get('last_seen', '')
+        latest_time = dt
+        latest_rssi = str(latest.get('last_rssi') or latest.get('rssi', ''))
+    return {
+        'det_count':       len(detections),
+        'flock_connected': flock_device_connected,
+        'gps_connected':   gps_enabled,
+        'latest_mac':      latest_mac,
+        'latest_time':     latest_time,
+        'latest_rssi':     latest_rssi,
+        'session_since':   session_start_time.strftime('%H:%M:%S'),
+    }
+
 
 # Persistent storage functions
 def load_cumulative_detections():
@@ -1528,7 +1554,13 @@ if __name__ == '__main__':
     # Start heartbeat thread
     heartbeat_thread = threading.Thread(target=send_heartbeat, daemon=True)
     heartbeat_thread.start()
-    
+
+    # Start e-paper display (silent no-op if hardware or library absent)
+    _epd_display = None
+    if _EPD_AVAILABLE:
+        _epd_display = EPDDisplay(_get_epd_state)
+        _epd_display.start()
+
     print("Starting Flock You API server...")
     print("Server will be available at: http://localhost:5000")
     print("Press Ctrl+C to stop the server")
@@ -1537,6 +1569,8 @@ if __name__ == '__main__':
         socketio.run(app, debug=False, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
     except KeyboardInterrupt:
         print("\nShutting down server...")
+        if _epd_display:
+            _epd_display.stop()
         # Clean up connections
         if flock_serial_connection and flock_serial_connection.is_open:
             flock_serial_connection.close()
