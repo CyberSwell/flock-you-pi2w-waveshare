@@ -1290,7 +1290,7 @@
                     <div class="device-control-group">
                         <div class="status-indicator" id="flockStatus"></div>
                         <label>Sniffer:</label>
-                        <div class="port-controls">
+                        <div class="port-controls" id="flockPortControls">
                             <select id="flockDeviceSelect">
                                 <option value="">Select Port</option>
                             </select>
@@ -1303,7 +1303,7 @@
                     <div class="device-control-group">
                         <div class="status-indicator" id="gpsStatus"></div>
                         <label>GPS:</label>
-                        <div class="port-controls">
+                        <div class="port-controls" id="gpsPortControls">
                             <select id="gpsPortSelect">
                                 <option value="">Select Port</option>
                             </select>
@@ -1751,8 +1751,6 @@
                 console.log('Flock connection response:', data);
                 if (data.status === 'success') {
                     updateFlockStatus(true);
-                    document.getElementById('connectFlockBtn').style.display = 'none';
-                    document.getElementById('disconnectFlockBtn').style.display = 'inline-block';
                 } else {
                     alert('Flock You connection failed: ' + data.message);
                 }
@@ -1774,8 +1772,6 @@
                 console.log('Flock disconnect response:', data);
                 if (data.status === 'success') {
                     updateFlockStatus(false);
-                    document.getElementById('connectFlockBtn').style.display = 'inline-block';
-                    document.getElementById('disconnectFlockBtn').style.display = 'none';
                 }
             })
             .catch(error => {
@@ -1805,8 +1801,6 @@
                 if (data.status === 'success') {
                     gpsConnected = true;
                     updateGpsStatus(true);
-                    document.getElementById('connectGpsBtn').style.display = 'none';
-                    document.getElementById('disconnectGpsBtn').style.display = 'inline-block';
                 } else {
                     alert('GPS connection failed: ' + data.message);
                 }
@@ -1829,8 +1823,6 @@
                 if (data.status === 'success') {
                     gpsConnected = false;
                     updateGpsStatus(false);
-                    document.getElementById('connectGpsBtn').style.display = 'inline-block';
-                    document.getElementById('disconnectGpsBtn').style.display = 'none';
                 }
             })
             .catch(error => {
@@ -1839,23 +1831,17 @@
         }
 
         function updateFlockStatus(connected) {
-            const indicator = document.getElementById('flockStatus');
-            
-            if (connected) {
-                indicator.classList.add('active');
-            } else {
-                indicator.classList.remove('active');
-            }
+            document.getElementById('flockStatus').classList.toggle('active', connected);
+            document.getElementById('flockPortControls').style.display = connected ? 'none' : '';
+            document.getElementById('connectFlockBtn').style.display    = connected ? 'none' : 'inline-block';
+            document.getElementById('disconnectFlockBtn').style.display = connected ? 'inline-block' : 'none';
         }
 
         function updateGpsStatus(connected) {
-            const indicator = document.getElementById('gpsStatus');
-            
-            if (connected) {
-                indicator.classList.add('active');
-            } else {
-                indicator.classList.remove('active');
-            }
+            document.getElementById('gpsStatus').classList.toggle('active', connected);
+            document.getElementById('gpsPortControls').style.display = connected ? 'none' : '';
+            document.getElementById('connectGpsBtn').style.display    = connected ? 'none' : 'inline-block';
+            document.getElementById('disconnectGpsBtn').style.display = connected ? 'inline-block' : 'none';
         }
 
         function loadStatus() {
@@ -1865,11 +1851,6 @@
                     console.log('Status loaded:', data);
                     updateFlockStatus(data.flock_connected);
                     updateGpsStatus(data.gps_connected);
-
-                    document.getElementById('connectFlockBtn').style.display    = data.flock_connected ? 'none'         : 'inline-block';
-                    document.getElementById('disconnectFlockBtn').style.display = data.flock_connected ? 'inline-block' : 'none';
-                    document.getElementById('connectGpsBtn').style.display      = data.gps_connected  ? 'none'         : 'inline-block';
-                    document.getElementById('disconnectGpsBtn').style.display   = data.gps_connected  ? 'inline-block' : 'none';
                 })
                 .catch(error => {
                     console.error('Error loading status:', error);
@@ -2206,19 +2187,11 @@
         socket.on('gps_disconnected', function() {
             console.log('GPS disconnected');
             updateGpsStatus(false);
-            const connectBtn = document.getElementById('connectGpsBtn');
-            const disconnectBtn = document.getElementById('disconnectGpsBtn');
-            if (connectBtn) connectBtn.style.display = 'inline-block';
-            if (disconnectBtn) disconnectBtn.style.display = 'none';
         });
 
         socket.on('flock_disconnected', function() {
             console.log('Sniffer device disconnected');
             updateFlockStatus(false);
-            const connectBtn = document.getElementById('connectFlockBtn');
-            const disconnectBtn = document.getElementById('disconnectFlockBtn');
-            if (connectBtn) connectBtn.style.display = 'inline-block';
-            if (disconnectBtn) disconnectBtn.style.display = 'none';
         });
 
         socket.on('detections_cleared', function() {
@@ -2236,8 +2209,6 @@
         socket.on('flock_reconnected', function(data) {
             console.log('Sniffer device reconnected:', data);
             updateFlockStatus(true);
-            document.getElementById('connectFlockBtn').style.display = 'none';
-            document.getElementById('disconnectFlockBtn').style.display = 'inline-block';
             if (document.getElementById('serialTerminalContainer').style.display !== 'none') {
                 addSerialLine(`Sniffer device reconnected on ${data.port}`, 'success');
             }
@@ -2246,8 +2217,6 @@
         socket.on('gps_reconnected', function(data) {
             console.log('GPS device reconnected:', data);
             updateGpsStatus(true);
-            document.getElementById('connectGpsBtn').style.display = 'none';
-            document.getElementById('disconnectGpsBtn').style.display = 'inline-block';
             if (document.getElementById('serialTerminalContainer').style.display !== 'none') {
                 addSerialLine(`GPS device reconnected on ${data.port}`, 'success');
             }
