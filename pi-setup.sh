@@ -33,8 +33,24 @@ sudo apt-get install -y python3-pil python3-spidev python3-rpi.gpio
 echo "[3] Installing Python packages..."
 pip3 install --break-system-packages -r "$REPO_DIR/api/requirements.txt"
 
-# ── 4. systemd service ────────────────────────────────────────────────────────
-echo "[4] Installing systemd service..."
+# ── 4. Waveshare driver package ───────────────────────────────────────────────
+# The pip package adds its lib dir to sys.path, but the driver files use
+# relative imports so they must live inside a proper package. Copy them.
+echo "[4] Installing Waveshare EPD drivers..."
+EPAPER_LIB="$(python3 -c "import glob, os; paths=glob.glob(os.path.expanduser('~/.local/lib/python*/site-packages/epaper/e-Paper/RaspberryPi_JetsonNano/python/lib/waveshare_epd')); print(paths[0] if paths else '')")"
+EPD_DEST="$REPO_DIR/api/waveshare_epd"
+if [ -n "$EPAPER_LIB" ]; then
+    mkdir -p "$EPD_DEST"
+    cp "$EPAPER_LIB"/epd2in13_V4.py "$EPD_DEST/"
+    cp "$EPAPER_LIB"/epdconfig.py    "$EPD_DEST/"
+    touch "$EPD_DEST/__init__.py"
+    echo "    Copied Waveshare drivers to $EPD_DEST"
+else
+    echo "    WARNING: waveshare_epd library not found — install waveshare-epaper first"
+fi
+
+# ── 5. systemd service ────────────────────────────────────────────────────────
+echo "[5] Installing systemd service..."
 
 # Patch WorkingDirectory and User= to match the actual clone location and user, then install
 CURRENT_USER="$(whoami)"
