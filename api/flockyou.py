@@ -232,38 +232,49 @@ def safe_socket_emit(event, data, room=None):
     except Exception as e:
         print(f"Socket emit error for {event}: {e}")
 
+GPS_DATA_TIMEOUT = 15  # seconds of silence before marking GPS offline
+
 def gps_reader():
     """Background thread for reading GPS data"""
     global gps_data, serial_connection, gps_enabled
-    
+
+    last_data = time.monotonic()  # reset when any byte arrives
+
     while gps_enabled:
         if serial_connection and serial_connection.is_open:
             try:
                 line = serial_connection.readline().decode('utf-8', errors='ignore')
                 if line:
+                    last_data = time.monotonic()
                     # Send raw GPS data to serial terminal
                     safe_socket_emit('serial_data', f"GPS: {line.strip()}", room='serial_terminal')
-                    
+
                     parsed = parse_nmea_sentence(line)
                     if parsed:
                         gps_data = parsed
-                        
+
                         # Add to GPS history with timestamp for temporal matching
                         if parsed.get('fix_quality') > 0:
                             gps_entry = parsed.copy()
                             gps_entry['system_timestamp'] = time.time()
                             gps_history.append(gps_entry)
-                            
+
                             # Keep only recent GPS readings
                             if len(gps_history) > MAX_GPS_HISTORY:
                                 gps_history.pop(0)
-                        
+
                         safe_socket_emit('gps_update', parsed)
-                        
+
                         # Also send parsed GPS data to terminal
                         if parsed.get('fix_quality') > 0:
                             gps_info = f"GPS Fix: {parsed.get('latitude', 'N/A')}, {parsed.get('longitude', 'N/A')} - {parsed.get('satellites', 0)} satellites"
                             safe_socket_emit('serial_data', gps_info, room='serial_terminal')
+                elif time.monotonic() - last_data > GPS_DATA_TIMEOUT:
+                    print(f"GPS data timeout ({GPS_DATA_TIMEOUT}s) — marking offline")
+                    with connection_lock:
+                        gps_enabled = False
+                    safe_socket_emit('gps_disconnected', {})
+                    break
             except Exception as e:
                 print(f"GPS read error: {e}")
                 with connection_lock:
