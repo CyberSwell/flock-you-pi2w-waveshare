@@ -223,14 +223,17 @@ class EPDDisplay:
         # ── GPS status + coordinates (hidden when GPS is offline) ──────
         gps_lat = state.get('gps_lat', '')
         gps_lon = state.get('gps_lon', '')
+        cy = 84 + dot_r
         if gps_ok:
-            cy = 84 + dot_r
             draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], fill=0)
             if isinstance(gps_lat, (int, float)) and isinstance(gps_lon, (int, float)):
                 draw.text((18, 84), f"GPS: {gps_lat:.4f} / {gps_lon:.4f}",
                           font=self._f_mono, fill=0)
             else:
                 draw.text((18, 84), "GPS: Searching...", font=self._f_mono, fill=0)
+        else:
+            draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], outline=0)
+            draw.text((18, 84), "GPS: OFFLINE", font=self._f_mono, fill=0)
 
         # ── Stats row (sats + cumulative total) ───────────────────────
         gps_sats  = state.get('gps_sats', 0)
