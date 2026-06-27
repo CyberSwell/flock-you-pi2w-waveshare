@@ -190,7 +190,7 @@ class EPDDisplay:
             draw.text((x_text, y), f"{label}: {status}", font=self._f_small, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 37, EPD_WIDTH - 1, 37], fill=0)
+        draw.line([0, 40, EPD_WIDTH - 1, 40], fill=0)
 
         # ── Latest detection ──────────────────────────────────────────
         latest_mac  = state.get('latest_mac',  '')
@@ -198,29 +198,29 @@ class EPDDisplay:
         latest_rssi = state.get('latest_rssi', '')
 
         if latest_mac:
-            draw.text((4, 40), "LAST:", font=self._f_body, fill=0)
-            draw.text((46, 40), latest_mac.upper(), font=self._f_mono, fill=0)
+            draw.text((4, 43), "LAST:", font=self._f_body, fill=0)
+            draw.text((46, 43), latest_mac.upper(), font=self._f_mono, fill=0)
 
-            draw.text((4, 54), latest_time, font=self._f_mono, fill=0)
+            draw.text((4, 57), latest_time, font=self._f_mono, fill=0)
             if latest_rssi:
-                draw.text((178, 54), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                draw.text((178, 57), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
         else:
-            draw.text((4, 40), "No detections this session", font=self._f_body, fill=0)
+            draw.text((4, 43), "No detections this session", font=self._f_body, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 68, EPD_WIDTH - 1, 68], fill=0)
+        draw.line([0, 74, EPD_WIDTH - 1, 74], fill=0)
 
         # ── Session info ──────────────────────────────────────────────
         session_since = state.get('session_since', '--:--:--')
-        draw.text((4, 71), f"Session since {session_since}", font=self._f_small, fill=0)
+        draw.text((4, 77), f"Session since {session_since}", font=self._f_small, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 84, EPD_WIDTH - 1, 84], fill=0)
+        draw.line([0, 92, EPD_WIDTH - 1, 92], fill=0)
 
         # ── Footer ────────────────────────────────────────────────────
-        draw.text((4, 87), "flock-you", font=self._f_tiny, fill=0)
+        draw.text((4, 95), "flock-you", font=self._f_tiny, fill=0)
         footer_ts = datetime.now().strftime('%m/%d  %H:%M')
-        draw.text((188, 87), footer_ts, font=self._f_tiny, fill=0)
+        draw.text((188, 95), footer_ts, font=self._f_tiny, fill=0)
 
         return img
 

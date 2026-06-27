@@ -71,6 +71,7 @@ def _get_epd_state():
         'latest_time':     latest_time,
         'latest_rssi':     latest_rssi,
         'session_since':   session_start_time.strftime('%H:%M:%S'),
+        'current_minute':  datetime.now().strftime('%H:%M'),
     }
 
 
