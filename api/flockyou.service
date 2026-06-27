@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
+User=pi  # TODO: change to match your Pi username before running pi-setup.sh
 WorkingDirectory=/home/pi/flock-you/api
 ExecStart=/usr/bin/python3 flockyou.py
 Restart=on-failure
