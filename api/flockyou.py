@@ -735,11 +735,13 @@ def connect_gps():
         serial_connection = serial.Serial(port, GPS_BAUDRATE, timeout=GPS_TIMEOUT)
         with connection_lock:
             gps_enabled = True
-        
+        settings['gps_port'] = port
+        save_settings()
+
         # Start GPS reading thread
         gps_thread = threading.Thread(target=gps_reader, daemon=True)
         gps_thread.start()
-        
+
         return jsonify({'status': 'success', 'message': f'Connected to {port}'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -771,11 +773,13 @@ def connect_flock():
         with connection_lock:
             flock_device_connected = True
         flock_device_port = port
-        
+        settings['flock_port'] = port
+        save_settings()
+
         # Start reading thread
         flock_thread = threading.Thread(target=flock_reader, daemon=True)
         flock_thread.start()
-        
+
         return jsonify({'status': 'success', 'message': f'Connected to Flock You device on {port}'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
@@ -1548,6 +1552,28 @@ if __name__ == '__main__':
     load_cumulative_detections()
     load_settings()
     
+    # Auto-connect to last-used ports saved in settings
+    if settings.get('flock_port'):
+        try:
+            flock_serial_connection = serial.Serial(settings['flock_port'], 115200, timeout=1)
+            flock_device_connected = True
+            flock_device_port = settings['flock_port']
+            flock_thread = threading.Thread(target=flock_reader, daemon=True)
+            flock_thread.start()
+            print(f"Auto-connected to Flock device on {settings['flock_port']}")
+        except Exception as e:
+            print(f"Auto-connect to Flock device failed ({settings['flock_port']}): {e}")
+
+    if settings.get('gps_port'):
+        try:
+            serial_connection = serial.Serial(settings['gps_port'], GPS_BAUDRATE, timeout=GPS_TIMEOUT)
+            gps_enabled = True
+            gps_thread = threading.Thread(target=gps_reader, daemon=True)
+            gps_thread.start()
+            print(f"Auto-connected to GPS on {settings['gps_port']}")
+        except Exception as e:
+            print(f"Auto-connect to GPS failed ({settings['gps_port']}): {e}")
+
     # Start connection monitor thread
     monitor_thread = threading.Thread(target=connection_monitor, daemon=True)
     monitor_thread.start()

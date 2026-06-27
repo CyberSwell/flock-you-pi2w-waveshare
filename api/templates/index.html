@@ -1865,16 +1865,11 @@
                     console.log('Status loaded:', data);
                     updateFlockStatus(data.flock_connected);
                     updateGpsStatus(data.gps_connected);
-                    
-                    if (data.flock_connected) {
-                        document.getElementById('connectFlockBtn').style.display = 'none';
-                        document.getElementById('disconnectFlockBtn').style.display = 'inline-block';
-                    }
-                    
-                    if (data.gps_connected) {
-                        document.getElementById('connectGpsBtn').style.display = 'none';
-                        document.getElementById('disconnectGpsBtn').style.display = 'inline-block';
-                    }
+
+                    document.getElementById('connectFlockBtn').style.display    = data.flock_connected ? 'none'         : 'inline-block';
+                    document.getElementById('disconnectFlockBtn').style.display = data.flock_connected ? 'inline-block' : 'none';
+                    document.getElementById('connectGpsBtn').style.display      = data.gps_connected  ? 'none'         : 'inline-block';
+                    document.getElementById('disconnectGpsBtn').style.display   = data.gps_connected  ? 'inline-block' : 'none';
                 })
                 .catch(error => {
                     console.error('Error loading status:', error);
