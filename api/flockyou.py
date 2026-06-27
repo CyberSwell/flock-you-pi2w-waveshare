@@ -43,6 +43,8 @@ max_reconnect_attempts = 5
 reconnect_delay = 3  # seconds
 connection_lock = threading.Lock()
 serial_queue = queue.Queue()
+last_esp32_gps_status = 0.0  # monotonic timestamp of last gps_status from ESP32
+ESP32_GPS_TIMEOUT = 90  # seconds of silence before clearing gps_enabled
 next_detection_id = 1  # Unique ID counter
 settings = {'gps_port': '', 'flock_port': '', 'filter': 'all'}
 
@@ -314,7 +316,7 @@ FLOCK_DATA_TIMEOUT = 30  # seconds of silence before marking sniffer offline
 
 def flock_reader():
     """Background thread for reading Flock device data"""
-    global flock_serial_connection, flock_device_connected, serial_data_buffer
+    global flock_serial_connection, flock_device_connected, serial_data_buffer, gps_data, gps_enabled, last_esp32_gps_status
 
     last_data = time.monotonic()
 
@@ -340,20 +342,41 @@ def flock_reader():
                             try:
                                 data = json.loads(line)
                                 if 'detection_method' in data:
-                                    # Map ESP32 GPS from phone to Flask GPS format
+                                    # Map ESP32 GPS fields to Flask GPS format
                                     esp_gps = data.get('gps')
-                                    if esp_gps:
+                                    if esp_gps and esp_gps.get('fix'):
                                         data['gps'] = {
                                             'latitude': esp_gps.get('latitude'),
                                             'longitude': esp_gps.get('longitude'),
                                             'fix_quality': 1,
-                                            'match_quality': 'esp32_phone_gps',
+                                            'match_quality': 'esp32_gps',
                                             'time_diff': 0,
                                         }
-                                        if esp_gps.get('accuracy') is not None:
-                                            data['gps']['accuracy'] = esp_gps['accuracy']
-                                    # This is a detection, add it
+                                    else:
+                                        data.pop('gps', None)
                                     add_detection_from_serial(data)
+                                elif data.get('event') == 'gps_status':
+                                    last_esp32_gps_status = time.monotonic()
+                                    if data.get('fix'):
+                                        parsed = {
+                                            'latitude': data.get('latitude'),
+                                            'longitude': data.get('longitude'),
+                                            'satellites': data.get('satellites', 0),
+                                            'fix_quality': 1,
+                                            'source': 'esp32',
+                                        }
+                                        gps_data = parsed
+                                        with connection_lock:
+                                            gps_enabled = True
+                                        safe_socket_emit('gps_update', {**parsed, 'source': 'esp32'})
+                                    else:
+                                        with connection_lock:
+                                            gps_enabled = True
+                                        safe_socket_emit('gps_update', {
+                                            'fix_quality': 0,
+                                            'satellites': data.get('satellites', 0),
+                                            'source': 'esp32',
+                                        })
                                 else:
                                     print(f"JSON data without detection_method: {data}")
                             except json.JSONDecodeError:
@@ -575,10 +598,18 @@ def add_detection_from_serial(data):
 
 def connection_monitor():
     """Background thread for monitoring device connections"""
-    global gps_enabled, flock_device_connected, serial_connection, reconnect_attempts
-    
+    global gps_enabled, flock_device_connected, serial_connection, reconnect_attempts, last_esp32_gps_status
+
     with app.app_context():
         while True:
+            # ESP32 GPS heartbeat timeout — 90s of silence clears gps_enabled
+            if gps_enabled and last_esp32_gps_status > 0:
+                if time.monotonic() - last_esp32_gps_status > ESP32_GPS_TIMEOUT:
+                    with connection_lock:
+                        gps_enabled = False
+                    safe_socket_emit('gps_disconnected', {})
+                    print("ESP32 GPS heartbeat timed out (>90s)")
+
             # Check GPS connection
             if gps_enabled:
                 try:

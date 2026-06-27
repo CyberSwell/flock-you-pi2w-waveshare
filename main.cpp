@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <SPIFFS.h>
+#include <TinyGPS++.h>
 
 // ============================================================
 // CONFIG
@@ -192,6 +193,8 @@ static size_t   fullHopIndex = 0;
 static unsigned long lastHop = 0;
 static unsigned long lastHeartbeat = 0;
 static volatile bool sniffingStopped = false;
+
+static TinyGPSPlus gps;
 
 // Dedupe table (small circular, avoids single-slot eviction bug).
 // This is the *serial-rate-limit* dedup — it suppresses beep + emit within
@@ -444,6 +447,18 @@ static void printHeartbeat() {
   if (millis() - lastHeartbeat >= HEARTBEAT_MS) {
     dualPrintf("[flockyou] scanning (ch=%u mode=%s det=%d)\n",
                   currentChannel, channelModeName(), fyDetCount);
+
+    if (gps.location.isValid()) {
+      char latBuf[20], lonBuf[20];
+      dtostrf(gps.location.lat(), 1, 6, latBuf);
+      dtostrf(gps.location.lng(), 1, 6, lonBuf);
+      dualPrintf("{\"event\":\"gps_status\",\"fix\":true,\"latitude\":%s,\"longitude\":%s,\"satellites\":%u,\"source\":\"esp32\"}\n",
+                 latBuf, lonBuf, (unsigned)gps.satellites.value());
+    } else {
+      dualPrintf("{\"event\":\"gps_status\",\"fix\":false,\"latitude\":null,\"longitude\":null,\"satellites\":%u,\"source\":\"esp32\"}\n",
+                 (unsigned)gps.satellites.value());
+    }
+
     lastHeartbeat = millis();
   }
 }
@@ -752,14 +767,6 @@ static void fyPromotePrevSession() {
 // FLASK-COMPATIBLE JSON EMISSION
 // ============================================================
 //
-// The Flask app (flock-you/api/flockyou.py) reads one JSON object per line
-// from the USB CDC serial port. It filters by presence of `detection_method`
-// and extracts these fields:  mac_address, rssi, channel, frequency, ssid,
-// device_name, gps.latitude, gps.longitude, gps.accuracy.
-//
-// GPS is handled Flask-side via its own USB NMEA puck or browser geolocation;
-// we don't embed GPS here because there's no on-device AP / phone link.
-
 static void emitDetectionJSON(const char* mac, const char* method,
                               int8_t rssi, uint8_t ch, const char* ssid) {
   char ssidEsc[sizeof(((FYDetection*)0)->ssid) * 6 + 1];
@@ -770,19 +777,41 @@ static void emitDetectionJSON(const char* mac, const char* method,
          &mbytes[0], &mbytes[1], &mbytes[2], &mbytes[3], &mbytes[4], &mbytes[5]);
   ouiFromMac(mbytes, oui, sizeof(oui));
 
-  dualPrintf(
-      "{\"event\":\"detection\","
-      "\"detection_method\":\"wifi_%s\","
-      "\"protocol\":\"wifi_2_4ghz\","
-      "\"mac_address\":\"%s\","
-      "\"oui\":\"%s\","
-      "\"device_name\":\"\","
-      "\"rssi\":%d,"
-      "\"channel\":%u,"
-      "\"frequency\":%u,"
-      "\"ssid\":\"%s\"}\n",
-      method, mac, oui, rssi,
-      (unsigned)ch, (unsigned)channelFreqMhz(ch), ssidEsc);
+  if (gps.location.isValid()) {
+    char latBuf[20], lonBuf[20];
+    dtostrf(gps.location.lat(), 1, 6, latBuf);
+    dtostrf(gps.location.lng(), 1, 6, lonBuf);
+    dualPrintf(
+        "{\"event\":\"detection\","
+        "\"detection_method\":\"wifi_%s\","
+        "\"protocol\":\"wifi_2_4ghz\","
+        "\"mac_address\":\"%s\","
+        "\"oui\":\"%s\","
+        "\"device_name\":\"\","
+        "\"rssi\":%d,"
+        "\"channel\":%u,"
+        "\"frequency\":%u,"
+        "\"ssid\":\"%s\","
+        "\"gps\":{\"fix\":true,\"latitude\":%s,\"longitude\":%s,\"satellites\":%u}}\n",
+        method, mac, oui, rssi,
+        (unsigned)ch, (unsigned)channelFreqMhz(ch), ssidEsc,
+        latBuf, lonBuf, (unsigned)gps.satellites.value());
+  } else {
+    dualPrintf(
+        "{\"event\":\"detection\","
+        "\"detection_method\":\"wifi_%s\","
+        "\"protocol\":\"wifi_2_4ghz\","
+        "\"mac_address\":\"%s\","
+        "\"oui\":\"%s\","
+        "\"device_name\":\"\","
+        "\"rssi\":%d,"
+        "\"channel\":%u,"
+        "\"frequency\":%u,"
+        "\"ssid\":\"%s\","
+        "\"gps\":{\"fix\":false,\"latitude\":null,\"longitude\":null,\"satellites\":0}}\n",
+        method, mac, oui, rssi,
+        (unsigned)ch, (unsigned)channelFreqMhz(ch), ssidEsc);
+  }
 }
 
 // ============================================================
@@ -1053,6 +1082,8 @@ void setup() {
   Serial1.begin(MIRROR_BAUD, SERIAL_8N1, -1, MIRROR_TX_PIN);  // TX-only on GPIO43
 #endif
 
+  Serial2.begin(9600, SERIAL_8N1, 7, -1);  // NEO-6M NMEA: RX=GPIO7, TX unused
+
 #if USE_BUZZER
   pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(BUZZER_PIN, LOW);
@@ -1112,6 +1143,7 @@ void setup() {
 }
 
 void loop() {
+  while (Serial2.available()) gps.encode(Serial2.read());
   updateChannelMode();
   drainAlertQueue();   // Serial.printf happens here, not in callback
   autosaveTick();      // periodic SPIFFS write if dirty
