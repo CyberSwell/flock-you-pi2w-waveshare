@@ -169,8 +169,8 @@ class EPDDisplay:
         draw.text((4, 3), "FLOCK-YOU", font=self._f_title, fill=255)
 
         det_count = state.get('det_count', 0)
-        noun = "device" if det_count == 1 else "devices"
-        device_str = f"{det_count} {noun}"
+        cum_count = state.get('cumulative_count', 0)
+        device_str = f"{det_count} / {cum_count:,}"
         now_str = datetime.now().strftime('%m/%d %H:%M')
         try:
             dev_w = int(draw.textlength(device_str, font=self._f_body))
@@ -235,12 +235,10 @@ class EPDDisplay:
             draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], outline=0)
             draw.text((18, 74), "GPS: OFFLINE", font=self._f_mono, fill=0)
 
-        # ── Stats row (sats + cumulative total) ───────────────────────
-        gps_sats  = state.get('gps_sats', 0)
-        cum_count = state.get('cumulative_count', 0)
-        sats_str  = f"{gps_sats} sats" if (gps_ok and gps_sats) else "No fix"
-        draw.text((4,   104), sats_str,                font=self._f_small, fill=0)
-        draw.text((130, 104), f"Total: {cum_count:,}", font=self._f_small, fill=0)
+        # ── Stats row (satellite count) ───────────────────────────────
+        gps_sats = state.get('gps_sats', 0)
+        sats_str = f"{gps_sats} sats" if (gps_ok and gps_sats) else "No fix"
+        draw.text((18, 104), sats_str, font=self._f_small, fill=0)
 
 
         return img
