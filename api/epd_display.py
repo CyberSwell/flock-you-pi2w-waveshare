@@ -129,7 +129,7 @@ class EPDDisplay:
     def _init_epd(self):
         """Try to open the Waveshare V4 driver. Returns True on success."""
         try:
-            from waveshare_epd import epd2in13_V4
+            import epd2in13_V4
             self._epd = epd2in13_V4.EPD()
             self._epd.init()
             self._epd.Clear()
