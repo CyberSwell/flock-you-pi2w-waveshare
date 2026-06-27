@@ -181,26 +181,18 @@ class EPDDisplay:
             draw.text((108, 4), device_str, font=self._f_body, fill=255)
             draw.text((170, 4), now_str,    font=self._f_body, fill=255)
 
-        # ── Connectivity row ──────────────────────────────────────────
-        y = 27
+        # ── Sniffer status (detection section header) ─────────────────
         flock_ok = state.get('flock_connected', False)
         gps_ok   = state.get('gps_connected',   False)
-
-        dot_r = 5  # circle radius
-        for x_dot, label, ok, x_text in (
-            (4,   "SNIFFER", flock_ok,  18),
-            (148, "GPS",     gps_ok,   162),
-        ):
-            cy = y + dot_r
-            if ok:
-                draw.ellipse([x_dot, cy - dot_r, x_dot + dot_r * 2, cy + dot_r], fill=0)
-            else:
-                draw.ellipse([x_dot, cy - dot_r, x_dot + dot_r * 2, cy + dot_r], outline=0)
-            status = "ONLINE" if ok else "OFFLINE"
-            draw.text((x_text, y), f"{label}: {status}", font=self._f_small, fill=0)
-
-        # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 46, EPD_WIDTH - 1, 46], fill=0)
+        dot_r = 5
+        y_sniff = 25
+        cy = y_sniff + dot_r
+        if flock_ok:
+            draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], fill=0)
+        else:
+            draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], outline=0)
+        draw.text((18, y_sniff), f"SNIFFER: {'ONLINE' if flock_ok else 'OFFLINE'}",
+                  font=self._f_mono, fill=0)
 
         # ── Latest detection ──────────────────────────────────────────
         latest_mac     = state.get('latest_mac',     '')
@@ -209,42 +201,43 @@ class EPDDisplay:
         latest_channel = state.get('latest_channel', '')
 
         if latest_mac:
-            draw.text((4, 51), "LAST:", font=self._f_mono, fill=0)
-            draw.text((46, 51), latest_mac.upper(), font=self._f_mono, fill=0)
+            draw.text((4,  42), "LAST:",             font=self._f_mono, fill=0)
+            draw.text((46, 42), latest_mac.upper(),  font=self._f_mono, fill=0)
 
-            draw.text((4, 69), latest_age, font=self._f_small, fill=0)
+            draw.text((4, 59), latest_age, font=self._f_small, fill=0)
             if latest_channel:
-                draw.text((100, 69), f"CH {latest_channel}", font=self._f_small, fill=0)
+                draw.text((100, 59), f"CH {latest_channel}", font=self._f_small, fill=0)
             if latest_rssi:
                 rssi_str = f"RSSI: {latest_rssi}dBm"
                 try:
                     rssi_w = int(draw.textlength(rssi_str, font=self._f_mono))
-                    draw.text((EPD_WIDTH - rssi_w - 4, 69), rssi_str, font=self._f_mono, fill=0)
+                    draw.text((EPD_WIDTH - rssi_w - 4, 59), rssi_str, font=self._f_mono, fill=0)
                 except AttributeError:
-                    draw.text((155, 69), rssi_str, font=self._f_mono, fill=0)
+                    draw.text((155, 59), rssi_str, font=self._f_mono, fill=0)
         else:
-            draw.text((4, 51), "No detections this session", font=self._f_mono, fill=0)
+            draw.text((4, 42), "No detections this session", font=self._f_mono, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 87, EPD_WIDTH - 1, 87], fill=0)
+        draw.line([0, 78, EPD_WIDTH - 1, 78], fill=0)
 
-        # ── GPS coordinates ───────────────────────────────────────────
+        # ── GPS status + coordinates (hidden when GPS is offline) ──────
         gps_lat = state.get('gps_lat', '')
         gps_lon = state.get('gps_lon', '')
-        if state.get('gps_connected') and gps_lat != '' and gps_lon != '':
-            coord_str = f"{gps_lat:.4f} / {gps_lon:.4f}"
-        elif state.get('gps_connected'):
-            coord_str = "Searching for fix..."
-        else:
-            coord_str = "GPS offline"
-        draw.text((4, 92), coord_str, font=self._f_mono, fill=0)
+        if gps_ok:
+            cy = 84 + dot_r
+            draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], fill=0)
+            if isinstance(gps_lat, (int, float)) and isinstance(gps_lon, (int, float)):
+                draw.text((18, 84), f"GPS: {gps_lat:.4f} / {gps_lon:.4f}",
+                          font=self._f_mono, fill=0)
+            else:
+                draw.text((18, 84), "GPS: Searching...", font=self._f_mono, fill=0)
 
         # ── Stats row (sats + cumulative total) ───────────────────────
         gps_sats  = state.get('gps_sats', 0)
         cum_count = state.get('cumulative_count', 0)
-        sats_str  = f"{gps_sats} sats" if (state.get('gps_connected') and gps_sats) else "No fix"
-        draw.text((4,   107), sats_str,                font=self._f_small, fill=0)
-        draw.text((130, 107), f"Total: {cum_count:,}", font=self._f_small, fill=0)
+        sats_str  = f"{gps_sats} sats" if (gps_ok and gps_sats) else "No fix"
+        draw.text((4,   101), sats_str,                font=self._f_small, fill=0)
+        draw.text((130, 101), f"Total: {cum_count:,}", font=self._f_small, fill=0)
 
 
         return img
