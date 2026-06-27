@@ -82,9 +82,15 @@ def _get_epd_state():
     gps_lat = gps_lon = ''
     gps_sats = 0
     if gps_data:
-        gps_lat  = gps_data.get('latitude',  '')
-        gps_lon  = gps_data.get('longitude', '')
-        gps_sats = gps_data.get('satellites', 0)
+        gps_lat = gps_data.get('latitude',  '')
+        gps_lon = gps_data.get('longitude', '')
+        now_ts  = time.time()
+        recent_sats = [
+            e['satellites'] for e in gps_history
+            if now_ts - e.get('system_timestamp', 0) <= GPS_SAT_WINDOW_S
+            and e.get('satellites', 0) > 0
+        ]
+        gps_sats = max(recent_sats) if recent_sats else gps_data.get('satellites', 0)
 
     return {
         'det_count':        len(detections),
@@ -259,7 +265,8 @@ def safe_socket_emit(event, data, room=None):
     except Exception as e:
         print(f"Socket emit error for {event}: {e}")
 
-GPS_DATA_TIMEOUT = 15  # seconds of silence before marking GPS offline
+GPS_DATA_TIMEOUT = 15   # seconds of silence before marking GPS offline
+GPS_SAT_WINDOW_S = 60   # rolling window for satellite count displayed on EPD
 
 def gps_reader():
     """Background thread for reading GPS data"""
