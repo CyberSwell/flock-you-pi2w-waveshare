@@ -166,10 +166,16 @@ class EPDDisplay:
 
         det_count = state.get('det_count', 0)
         noun = "device" if det_count == 1 else "devices"
-        draw.text((108, 4), f"{det_count} {noun}", font=self._f_body, fill=255)
-
+        device_str = f"{det_count} {noun}"
         now_str = datetime.now().strftime('%m/%d  %H:%M')
-        draw.text((160, 4), now_str, font=self._f_body, fill=255)
+        try:
+            dev_w = int(draw.textlength(device_str, font=self._f_body))
+            now_w = int(draw.textlength(now_str,    font=self._f_body))
+            draw.text(((EPD_WIDTH - dev_w) // 2, 4), device_str, font=self._f_body, fill=255)
+            draw.text((EPD_WIDTH - now_w - 4,    4), now_str,    font=self._f_body, fill=255)
+        except AttributeError:
+            draw.text((108, 4), device_str, font=self._f_body, fill=255)
+            draw.text((170, 4), now_str,    font=self._f_body, fill=255)
 
         # ── Connectivity row ──────────────────────────────────────────
         y = 27
@@ -206,7 +212,12 @@ class EPDDisplay:
             if latest_channel:
                 draw.text((100, 69), f"CH {latest_channel}", font=self._f_small, fill=0)
             if latest_rssi:
-                draw.text((168, 69), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                rssi_str = f"RSSI: {latest_rssi}dBm"
+                try:
+                    rssi_w = int(draw.textlength(rssi_str, font=self._f_mono))
+                    draw.text((EPD_WIDTH - rssi_w - 4, 69), rssi_str, font=self._f_mono, fill=0)
+                except AttributeError:
+                    draw.text((155, 69), rssi_str, font=self._f_mono, fill=0)
         else:
             draw.text((4, 51), "No detections this session", font=self._f_body, fill=0)
 
