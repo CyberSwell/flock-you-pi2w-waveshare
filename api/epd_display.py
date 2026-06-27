@@ -178,8 +178,8 @@ class EPDDisplay:
 
         dot_r = 5  # circle radius
         for x_dot, label, ok, x_text in (
-            (4,   "SNIFFER", flock_ok, 18),
-            (116, "GPS",     gps_ok,   130),
+            (4,   "SNIFFER", flock_ok,  18),
+            (134, "GPS",     gps_ok,   148),
         ):
             cy = y + dot_r
             if ok:
