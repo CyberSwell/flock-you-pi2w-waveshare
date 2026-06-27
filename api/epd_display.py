@@ -198,29 +198,29 @@ class EPDDisplay:
         latest_rssi = state.get('latest_rssi', '')
 
         if latest_mac:
-            draw.text((4, 47), "LAST:", font=self._f_body, fill=0)
-            draw.text((46, 47), latest_mac.upper(), font=self._f_mono, fill=0)
+            draw.text((4, 49), "LAST:", font=self._f_body, fill=0)
+            draw.text((46, 49), latest_mac.upper(), font=self._f_mono, fill=0)
 
-            draw.text((4, 62), latest_time, font=self._f_mono, fill=0)
+            draw.text((4, 64), latest_time, font=self._f_mono, fill=0)
             if latest_rssi:
-                draw.text((178, 62), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                draw.text((178, 64), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
         else:
-            draw.text((4, 47), "No detections this session", font=self._f_body, fill=0)
+            draw.text((4, 49), "No detections this session", font=self._f_body, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
         draw.line([0, 79, EPD_WIDTH - 1, 79], fill=0)
 
         # ── Session info ──────────────────────────────────────────────
         session_since = state.get('session_since', '--:--:--')
-        draw.text((4, 82), f"Session since {session_since}", font=self._f_small, fill=0)
+        draw.text((4, 84), f"Session since {session_since}", font=self._f_small, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
         draw.line([0, 99, EPD_WIDTH - 1, 99], fill=0)
 
         # ── Footer ────────────────────────────────────────────────────
-        draw.text((4, 102), "flock-you", font=self._f_tiny, fill=0)
+        draw.text((4, 104), "flock-you", font=self._f_tiny, fill=0)
         footer_ts = datetime.now().strftime('%m/%d  %H:%M')
-        draw.text((188, 102), footer_ts, font=self._f_tiny, fill=0)
+        draw.text((188, 104), footer_ts, font=self._f_tiny, fill=0)
 
         return img
 
