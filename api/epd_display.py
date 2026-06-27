@@ -227,10 +227,10 @@ class EPDDisplay:
             draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], fill=0)
             draw.text((18, 74), "GPS: Connected", font=self._f_mono, fill=0)
             if isinstance(gps_lat, (int, float)) and isinstance(gps_lon, (int, float)):
-                draw.text((4, 89), f"{gps_lat:.4f} / {gps_lon:.4f}",
+                draw.text((18, 89), f"{gps_lat:.4f} / {gps_lon:.4f}",
                           font=self._f_mono, fill=0)
             else:
-                draw.text((4, 89), "Searching...", font=self._f_mono, fill=0)
+                draw.text((18, 89), "Searching...", font=self._f_mono, fill=0)
         else:
             draw.ellipse([4, cy - dot_r, 4 + dot_r * 2, cy + dot_r], outline=0)
             draw.text((18, 74), "GPS: OFFLINE", font=self._f_mono, fill=0)
