@@ -36,8 +36,10 @@ pip3 install --break-system-packages -r "$REPO_DIR/api/requirements.txt"
 # ── 4. systemd service ────────────────────────────────────────────────────────
 echo "[4] Installing systemd service..."
 
-# Patch WorkingDirectory to match the actual clone location, then install
-sed "s|/home/pi/flock-you|$REPO_DIR|g" "$SERVICE_SRC" \
+# Patch WorkingDirectory and User= to match the actual clone location and user, then install
+CURRENT_USER="$(whoami)"
+sed -e "s|/home/pi/flock-you|$REPO_DIR|g" \
+    -e "s|^User=pi$|User=$CURRENT_USER|" "$SERVICE_SRC" \
     | sudo tee "$SERVICE_DST" > /dev/null
 
 sudo systemctl daemon-reload
