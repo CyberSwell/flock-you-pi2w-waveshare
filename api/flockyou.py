@@ -610,18 +610,16 @@ def connection_monitor():
                     safe_socket_emit('gps_disconnected', {})
                     print("ESP32 GPS heartbeat timed out (>90s)")
 
-            # Check GPS connection
-            if gps_enabled:
+            # Check USB GPS dongle connection (skip if GPS is managed by ESP32 heartbeat)
+            if gps_enabled and last_esp32_gps_status == 0:
                 try:
                     if not serial_connection or not serial_connection.is_open:
                         with connection_lock:
                             gps_enabled = False
                         safe_socket_emit('gps_disconnected', {})
                         print("GPS connection lost")
-                        # Start reconnection attempts
                         attempt_reconnect_gps()
                     else:
-                        # Test if the connection is still valid
                         serial_connection.in_waiting
                 except Exception as e:
                     print(f"GPS connection test failed: {e}")
