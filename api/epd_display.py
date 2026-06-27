@@ -152,10 +152,10 @@ class EPDDisplay:
 
     def _load_fonts(self):
         self._f_title = _load_font(_MONO_BOLD_PATHS, 12)
-        self._f_body  = _load_font(_MONO_PATHS, 11)
-        self._f_mono  = _load_font(_MONO_PATHS, 11)
-        self._f_small = _load_font(_MONO_PATHS,  9)
-        self._f_tiny  = _load_font(_MONO_PATHS,  9)
+        self._f_body  = _load_font(_MONO_PATHS,      12)
+        self._f_mono  = _load_font(_MONO_PATHS,      11)
+        self._f_small = _load_font(_MONO_PATHS,      11)
+        self._f_tiny  = _load_font(_MONO_PATHS,      11)
 
     def _render(self, state):
         """Return a PIL Image representing the current state."""
@@ -209,7 +209,7 @@ class EPDDisplay:
         latest_channel = state.get('latest_channel', '')
 
         if latest_mac:
-            draw.text((4, 51), "LAST:", font=self._f_body, fill=0)
+            draw.text((4, 51), "LAST:", font=self._f_mono, fill=0)
             draw.text((46, 51), latest_mac.upper(), font=self._f_mono, fill=0)
 
             draw.text((4, 69), latest_age, font=self._f_small, fill=0)
@@ -223,7 +223,7 @@ class EPDDisplay:
                 except AttributeError:
                     draw.text((155, 69), rssi_str, font=self._f_mono, fill=0)
         else:
-            draw.text((4, 51), "No detections this session", font=self._f_body, fill=0)
+            draw.text((4, 51), "No detections this session", font=self._f_mono, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
         draw.line([0, 87, EPD_WIDTH - 1, 87], fill=0)
