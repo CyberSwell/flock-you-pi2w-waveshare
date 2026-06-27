@@ -179,7 +179,7 @@ class EPDDisplay:
         dot_r = 5  # circle radius
         for x_dot, label, ok, x_text in (
             (4,   "SNIFFER", flock_ok,  18),
-            (134, "GPS",     gps_ok,   148),
+            (148, "GPS",     gps_ok,   162),
         ):
             cy = y + dot_r
             if ok:
@@ -193,22 +193,25 @@ class EPDDisplay:
         draw.line([0, 44, EPD_WIDTH - 1, 44], fill=0)
 
         # ── Latest detection ──────────────────────────────────────────
-        latest_mac  = state.get('latest_mac',  '')
-        latest_age  = state.get('latest_age',  '')
-        latest_rssi = state.get('latest_rssi', '')
+        latest_mac     = state.get('latest_mac',     '')
+        latest_age     = state.get('latest_age',     '')
+        latest_rssi    = state.get('latest_rssi',    '')
+        latest_channel = state.get('latest_channel', '')
 
         if latest_mac:
             draw.text((4, 49), "LAST:", font=self._f_body, fill=0)
             draw.text((46, 49), latest_mac.upper(), font=self._f_mono, fill=0)
 
-            draw.text((4, 63), latest_age, font=self._f_small, fill=0)
+            draw.text((4, 65), latest_age, font=self._f_small, fill=0)
+            if latest_channel:
+                draw.text((100, 65), f"CH {latest_channel}", font=self._f_small, fill=0)
             if latest_rssi:
-                draw.text((178, 63), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                draw.text((168, 65), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
         else:
             draw.text((4, 49), "No detections this session", font=self._f_body, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 77, EPD_WIDTH - 1, 77], fill=0)
+        draw.line([0, 83, EPD_WIDTH - 1, 83], fill=0)
 
         # ── GPS coordinates ───────────────────────────────────────────
         gps_lat = state.get('gps_lat', '')
@@ -219,14 +222,14 @@ class EPDDisplay:
             coord_str = "Searching for fix..."
         else:
             coord_str = "GPS offline"
-        draw.text((4, 82), coord_str, font=self._f_mono, fill=0)
+        draw.text((4, 88), coord_str, font=self._f_mono, fill=0)
 
         # ── Stats row (sats + cumulative total) ───────────────────────
         gps_sats  = state.get('gps_sats', 0)
         cum_count = state.get('cumulative_count', 0)
         sats_str  = f"{gps_sats} sats" if (state.get('gps_connected') and gps_sats) else "No fix"
-        draw.text((4,   96), sats_str,                    font=self._f_small, fill=0)
-        draw.text((130, 96), f"Total: {cum_count:,}",     font=self._f_small, fill=0)
+        draw.text((4,   101), sats_str,                font=self._f_small, fill=0)
+        draw.text((130, 101), f"Total: {cum_count:,}", font=self._f_small, fill=0)
 
 
         return img

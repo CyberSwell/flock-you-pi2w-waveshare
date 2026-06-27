@@ -59,8 +59,9 @@ def _get_epd_state():
     latest = detections[-1] if detections else None
     latest_mac, latest_age, latest_rssi = '', '', ''
     if latest:
-        latest_mac  = latest.get('mac_address', '')
-        latest_rssi = str(latest.get('last_rssi') or latest.get('rssi', ''))
+        latest_mac     = latest.get('mac_address', '')
+        latest_rssi    = str(latest.get('last_rssi') or latest.get('rssi', ''))
+        latest_channel = str(latest.get('last_channel') or latest.get('channel', ''))
         dt_str = latest.get('detection_time') or latest.get('last_seen', '')
         if dt_str:
             try:
@@ -92,6 +93,7 @@ def _get_epd_state():
         'latest_mac':       latest_mac,
         'latest_age':       latest_age,
         'latest_rssi':      latest_rssi,
+        'latest_channel':   latest_channel,
         'gps_lat':          gps_lat,
         'gps_lon':          gps_lon,
         'gps_sats':         gps_sats,
