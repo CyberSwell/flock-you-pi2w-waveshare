@@ -194,33 +194,46 @@ class EPDDisplay:
 
         # ── Latest detection ──────────────────────────────────────────
         latest_mac  = state.get('latest_mac',  '')
-        latest_time = state.get('latest_time', '')
+        latest_age  = state.get('latest_age',  '')
         latest_rssi = state.get('latest_rssi', '')
 
         if latest_mac:
             draw.text((4, 49), "LAST:", font=self._f_body, fill=0)
             draw.text((46, 49), latest_mac.upper(), font=self._f_mono, fill=0)
 
-            draw.text((4, 64), latest_time, font=self._f_mono, fill=0)
+            draw.text((4, 63), latest_age, font=self._f_small, fill=0)
             if latest_rssi:
-                draw.text((178, 64), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
+                draw.text((178, 63), f"RSSI: {latest_rssi}dBm", font=self._f_small, fill=0)
         else:
             draw.text((4, 49), "No detections this session", font=self._f_body, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 79, EPD_WIDTH - 1, 79], fill=0)
+        draw.line([0, 77, EPD_WIDTH - 1, 77], fill=0)
 
-        # ── Session info ──────────────────────────────────────────────
-        session_since = state.get('session_since', '--:--:--')
-        draw.text((4, 84), f"Session since {session_since}", font=self._f_small, fill=0)
+        # ── GPS coordinates ───────────────────────────────────────────
+        gps_lat = state.get('gps_lat', '')
+        gps_lon = state.get('gps_lon', '')
+        if state.get('gps_connected') and gps_lat != '' and gps_lon != '':
+            coord_str = f"{gps_lat:.4f} / {gps_lon:.4f}"
+        elif state.get('gps_connected'):
+            coord_str = "Searching for fix..."
+        else:
+            coord_str = "GPS offline"
+        draw.text((4, 82), coord_str, font=self._f_mono, fill=0)
+
+        # ── Stats row (sats + cumulative total) ───────────────────────
+        gps_sats  = state.get('gps_sats', 0)
+        cum_count = state.get('cumulative_count', 0)
+        sats_str  = f"{gps_sats} sats" if (state.get('gps_connected') and gps_sats) else "No fix"
+        draw.text((4,   96), sats_str,                    font=self._f_small, fill=0)
+        draw.text((130, 96), f"Total: {cum_count:,}",     font=self._f_small, fill=0)
 
         # ── Separator ─────────────────────────────────────────────────
-        draw.line([0, 99, EPD_WIDTH - 1, 99], fill=0)
+        draw.line([0, 108, EPD_WIDTH - 1, 108], fill=0)
 
-        # ── Footer ────────────────────────────────────────────────────
-        draw.text((4, 104), "flock-you", font=self._f_tiny, fill=0)
-        footer_ts = datetime.now().strftime('%m/%d  %H:%M')
-        draw.text((188, 104), footer_ts, font=self._f_tiny, fill=0)
+        # ── Footer (date only) ────────────────────────────────────────
+        draw.text((EPD_WIDTH // 2, 113), datetime.now().strftime('%m/%d'),
+                  font=self._f_tiny, fill=0, anchor='mt')
 
         return img
 

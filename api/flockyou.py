@@ -57,21 +57,46 @@ DATA_DIR.mkdir(exist_ok=True)
 def _get_epd_state():
     """Return display state dict; called by EPDDisplay thread every 5 s."""
     latest = detections[-1] if detections else None
-    latest_mac, latest_time, latest_rssi = '', '', ''
+    latest_mac, latest_age, latest_rssi = '', '', ''
     if latest:
         latest_mac  = latest.get('mac_address', '')
-        dt = latest.get('detection_time') or latest.get('last_seen', '')
-        latest_time = dt
         latest_rssi = str(latest.get('last_rssi') or latest.get('rssi', ''))
+        dt_str = latest.get('detection_time') or latest.get('last_seen', '')
+        if dt_str:
+            try:
+                try:
+                    dt = datetime.fromisoformat(dt_str)
+                except ValueError:
+                    dt = datetime.strptime(dt_str, '%Y-%m-%d %H:%M:%S')
+                elapsed = (datetime.now() - dt).total_seconds()
+                if elapsed < 60:
+                    latest_age = 'just now'
+                elif elapsed < 3600:
+                    latest_age = f"~{int(elapsed / 60)}m ago"
+                else:
+                    latest_age = f"~{int(elapsed / 3600)}h ago"
+            except Exception:
+                latest_age = dt_str
+
+    gps_lat = gps_lon = ''
+    gps_sats = 0
+    if gps_data:
+        gps_lat  = gps_data.get('latitude',  '')
+        gps_lon  = gps_data.get('longitude', '')
+        gps_sats = gps_data.get('satellites', 0)
+
     return {
-        'det_count':       len(detections),
-        'flock_connected': flock_device_connected,
-        'gps_connected':   gps_enabled,
-        'latest_mac':      latest_mac,
-        'latest_time':     latest_time,
-        'latest_rssi':     latest_rssi,
-        'session_since':   session_start_time.strftime('%H:%M:%S'),
-        'current_minute':  datetime.now().strftime('%H:%M'),
+        'det_count':        len(detections),
+        'flock_connected':  flock_device_connected,
+        'gps_connected':    gps_enabled,
+        'latest_mac':       latest_mac,
+        'latest_age':       latest_age,
+        'latest_rssi':      latest_rssi,
+        'gps_lat':          gps_lat,
+        'gps_lon':          gps_lon,
+        'gps_sats':         gps_sats,
+        'cumulative_count': len(cumulative_detections),
+        'current_minute':   datetime.now().strftime('%H:%M'),
     }
 
 
