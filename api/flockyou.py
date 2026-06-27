@@ -1631,27 +1631,31 @@ if __name__ == '__main__':
     load_cumulative_detections()
     load_settings()
     
-    # Auto-connect to last-used ports saved in settings
-    if settings.get('flock_port'):
+    # Auto-connect to Flock device: use saved port or auto-discover a single ACM/USB device
+    saved_port = settings.get('flock_port')
+    if not saved_port:
+        candidates = [p.device for p in serial.tools.list_ports.comports()
+                      if 'ACM' in p.device or 'USB' in (p.description or '').upper()]
+        if len(candidates) == 1:
+            saved_port = candidates[0]
+            print(f"Auto-discovered Flock device on {saved_port}")
+
+    if saved_port:
+        flock_device_port = saved_port  # set before try so reconnect can use it on failure
         try:
-            flock_serial_connection = serial.Serial(settings['flock_port'], 115200, timeout=1)
+            flock_serial_connection = serial.Serial(flock_device_port, 115200, timeout=1)
             flock_device_connected = True
-            flock_device_port = settings['flock_port']
+            settings['flock_port'] = flock_device_port
+            save_settings()
             flock_thread = threading.Thread(target=flock_reader, daemon=True)
             flock_thread.start()
-            print(f"Auto-connected to Flock device on {settings['flock_port']}")
+            print(f"Auto-connected to Flock device on {flock_device_port}")
         except Exception as e:
-            print(f"Auto-connect to Flock device failed ({settings['flock_port']}): {e}")
+            print(f"Auto-connect to Flock device failed ({flock_device_port}): {e} — retrying in background")
+            attempt_reconnect_flock()
 
-    if settings.get('gps_port'):
-        try:
-            serial_connection = serial.Serial(settings['gps_port'], GPS_BAUDRATE, timeout=GPS_TIMEOUT)
-            gps_enabled = True
-            gps_thread = threading.Thread(target=gps_reader, daemon=True)
-            gps_thread.start()
-            print(f"Auto-connected to GPS on {settings['gps_port']}")
-        except Exception as e:
-            print(f"Auto-connect to GPS failed ({settings['gps_port']}): {e}")
+    # GPS is now provided by the ESP32 heartbeat — no USB dongle needed at startup.
+    # The gps_reader / USB dongle path remains available via the UI for fallback use.
 
     # Start connection monitor thread
     monitor_thread = threading.Thread(target=connection_monitor, daemon=True)
