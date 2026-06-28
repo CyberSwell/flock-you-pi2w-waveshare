@@ -175,7 +175,17 @@ GPS is handled Flask-side, since the ESP32 radio is dedicated to sniffing and th
 
 Flask does a temporal match between detection timestamp and GPS timeline, then exports JSON / CSV / KML for Google Earth.
 
-### Running Flask
+### Pi Zero 2W deployment
+
+See **[docs/pi-deployment.md](docs/pi-deployment.md)** for the full step-by-step guide: SD card imaging, hardware wiring (ESP32 OTG, NEO-6M GPS on Pi 5V GPIO, Waveshare e-ink), and the one-command setup script.
+
+```bash
+git clone https://github.com/CyberSwell/flock-you-pi2w-waveshare ~/flock-you
+cd ~/flock-you && bash pi-setup.sh
+sudo reboot
+```
+
+### Running Flask (desktop / dev)
 
 ```bash
 cd api
